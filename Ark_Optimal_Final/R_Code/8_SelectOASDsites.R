@@ -15,23 +15,16 @@
 
 
 ## Set directory:
-setwd("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/8_SelectOASDsites")  # Fill in as appropriate
+setwd("~/CPWOptimalSampling/Output_Files/8_SelectOASDsites")  # Fill in as appropriate
 # setwd("~/ArkSelectSites")  # for server
 
 ## LIBRARIES:
-library(boot)  # for inv.logit function
-library(foreach)  # to run different starting values in parallel
-library(doParallel)
-library(spBayes)  # to make neighborhood matrices
-library(Matrix)  # to make 'hood matrix with resampled sites
-library(doRNG)  # to get reproducible results
 
-
-### Import the data and source functions -----------------------
-load("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/2_OrganizeNewData/ArkData.Rdata")
-load("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/4_RunModels/ArkInSampleModels.RData")
-load("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/7_SelectBalancedSites/ArkBalancedSites.RData") # load("ArkBalancedSites.RData")
-source("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Source_Files/ArkFunctions.R")
+ the data and source functions -----------------------
+load("~/CPWOptimalSampling/Output_Files/2_OrganizeNewData/ArkData.Rdata")
+load("~/CPWOptimalSampling/Output_Files/4_RunModels/ArkInSampleModels.RData")
+load("~/CPWOptimalSampling/Output_Files/7_SelectBalancedSites/ArkBalancedSites.RData") # load("ArkBalancedSites.RData")
+source("~/CPWOptimalSampling/Source_Files/ArkFunctions.R")
 # load("ArkData.Rdata")
 # load("ArkInSampleModels.RData")
 # load("ArkBalancedSites.RData")
@@ -209,6 +202,7 @@ for (yr in 1:nYears) {
       prev_q <- 0  # to start the while loop
       previousIndex <- tmpIndex[[qIndex]]
       nIter <- 0  # keep track of how many it loops through the sites
+      print(nIter)
       while (prev_q != new_q) {
         prev_q <- new_q
         nIter <- nIter + 1
@@ -228,8 +222,12 @@ for (yr in 1:nYears) {
                             nSurveys, nMCMC=nMCMC)
             nbor.q[j+1] <- sum( apply(new.q, 1, sum) )
             #         cat("Nbor.q", nbor.q, "\n")
+            print(j)
           }
           new_q <- min(nbor.q)
+          
+            gc()
+          
           previousIndex[k] <- nbors[previousIndex[k], which(nbor.q == new_q)[1]]
         }
         
@@ -261,7 +259,7 @@ for (yr in 1:nYears) {
   extraSitesIndex <- c(extraSitesIndex, OASDsites[yr, ])
   cat("Year ", yr, "completed \n")  
   
-  save.image("ArkAllSiteSelections.RData")
+  save.image("~/ArkAllSiteSelections.RData")
 }
 
 # save.image("~/ArkAllSiteSelections.RData")

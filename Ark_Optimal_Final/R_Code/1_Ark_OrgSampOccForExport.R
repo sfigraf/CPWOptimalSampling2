@@ -6,8 +6,9 @@
 # Set working directory to Input_Files Location
 # 2024 Data Cleaned_Data_include_dat_25Sept2024.csv
 
-
-
+###renv code:
+# renv::init()
+# renv::snapshot()
 # OUTPUTS:
 # IncludeSampOccasions.dbf of cleaned locations
 # IncludeSampOccasions.dbf goes into ArcGIS to get the snapped locations.
@@ -16,14 +17,14 @@
 library(foreign) # to read and write .dbf files
 
 # Set the directory:
-setwd("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Input_Files")
+setwd("~/CPWOptimalSampling/Input_Files")
 
-data <- read.csv("Cleaned_Data_include_dat_27Sept2024.csv", stringsAsFactors=F)
+data <- read.csv("Input_Files/Cleaned_Data_include_dat_27Sept2024.csv", stringsAsFactors=F)
 
 
 ### Write for ArcGIS and later Org ------------------------------
 # Write .dbf file of the include_SampOcc object
-write.dbf(data, "/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/1_OrgSampOccForExport/IncludedSampOccasions.dbf")
+write.dbf(data, "Output_Files/1_OrgSampOccForExport/IncludedSampOccasions.dbf")
 #
 # write.csv(data, "/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_bwa/Output_Files/Cleaned_Data_include_dat_25Sept2024.csv", row.names=F)
 

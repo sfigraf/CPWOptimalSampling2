@@ -28,20 +28,22 @@ library(ggplot2) # plotting functions
 library(sf) # new (2024) spatial data packages
 library(sp) # older spatial data packages
 library(SDMTools) # to add scale bar to maps
+#SG: needs rtools to install
+#install.packages('https://cran.r-project.org/src/contrib/Archive/SDMTools/SDMTools_1.1-221.2.tar.gz')
 library(OpenStreetMap) # to get an underlying satellite image?
 
 # Set the directory to input files:
-# setwd("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_bwa/Input_Files")
+setwd("~/CPWOptimalSampling")
 
 ### STEP 1: Organize site-level info and covariates --------
 
 ## Read in ArcGIS Stream Network info 
-streams <- read.dbf("/Volumes/CPW_Work/Optimum_Sampling/Ark_Optimal_Final/Input_Files/SurveyDesignStreams.dbf")
+streams <- read.dbf("Input_Files/SurveyDesignStreams.dbf")
 # str(streams)
 ## Change INT/PER to more proper Connect/Unconnect
 streams$StreamType <- ifelse(streams$StreamType=="INT", "UNCONNECT", "CONNECT")
 
-stream_pts <- read.dbf("/Volumes/CPW_Work/Optimum_Sampling/Ark_Optimal_Final/Input_Files/SurveyDesignStreamsAsPoints.dbf")
+stream_pts <- read.dbf("Input_Files/SurveyDesignStreamsAsPoints.dbf")
 # str(stream_pts)
 # Avoid name overlap with streams object
 stream_pts <- subset(stream_pts, select=-OBJECTID)
@@ -118,7 +120,13 @@ pred_sites <- all_sites[seq(1, nrow(all_sites), 100), ]
 ### STEP 2: Add SampOccasion-level info and covariates --------
 
 # Import the snapped locations to get correct covariate info:
-snapped_sites <- read.dbf("/Volumes/CPW_Work/Optimum_Sampling/Ark_Optimal_Final/Input_Files/snappedSurveys.dbf")
+#survey data snapped to correct location in the river (
+#one that works is snapped data from july 6 2016
+#new snaped surveys that brian added doesn't work
+#original 2016 snapped surveys
+#columns 20
+#
+snapped_sites <- read.dbf("Input_Files/snappedSurveys.dbf")
 
 ## After comparing data to stream network, need to edit one site's location:
 snapped_sites[snapped_sites$SurveyID==43945, "UTMX"] <- 620287
@@ -126,11 +134,15 @@ snapped_sites[snapped_sites$SurveyID==43945, "UTMY"] <- 4167592
 snapped_sites[snapped_sites$SurveyID==45532, "UTMX"] <- 620287
 snapped_sites[snapped_sites$SurveyID==45532, "UTMY"] <- 4167592
 #
-# names(snapped_sites)
+#names(snapped_sites)
+# survey ID changed to Species Code
+#SG: 
+#
 names(snapped_sites)[20] <- "SpeciesCode"
 
 ## Remove some sites that are still hanging around and shouldn't be:
 ## Sites are repeated counts of other surveys, but slightly diff coords:
+#SG: changedSurveyID here to Species Code, but also code 25784 doesn't seem to even be in here
 snapped_sites <- subset(snapped_sites, !(SurveyID %in% c(25784, 23897)))
 # dim(snapped_sites)  # 3197 obs.
 #
@@ -154,11 +166,16 @@ snapped_sites <- subset(snapped_sites, !(SurveyID %in% c(25784, 23897)))
 # Add covariate info associated with each sampled site: 
 # names(snapped_sites)
 # names(all_sites)
+#SG: should samp_dat have data here?
+#left_join works, merge() doesnt...
+samp_dat <- base::merge(all_sites, snapped_sites)
 samp_dat <- merge(snapped_sites, all_sites)
+#samp_dat <- left_join(all_sites, snapped_sites)
+
 # dim(snapped_sites) #3188  3197...
 # dim(samp_dat) #3188  3197...
 # Check any sites that don't get merged:
-# snapped_sites[!(snapped_sites$UTMX %in% samp_dat$UTMX), ]
+#snapped_sites[!(snapped_sites$UTMX %in% samp_dat$UTMX), ]
 # eh, OK.
 # rm(snapped_sites)
 #
@@ -184,6 +201,7 @@ samp_dat <- unique(samp_dat[, c("UTMX", "UTMY", "mySurveyID",
 # head(samp_dat$SampleDate)
 # head(strptime(as.character(samp_dat$SampleDate), 
 #               format="%d-%b-%Y")$year)
+#SG: All my sample dates are NA
 samp_dat$year <- strptime(as.character(samp_dat$SampleDate), 
                           format="%d-%b-%Y")$year - 100 + 2000
 samp_dat$YEAR <- as.factor(samp_dat$year)
@@ -231,6 +249,7 @@ samp_dat$PASSNO[grep("DIP", samp_dat$sameStatus)] <- 1
 
 ## Add in total count per occasion
 # length(unique(samp_dat$mySurveyID)) # 378
+#SG: brin said warning is OK here
 tmp <- with(samp_dat, tapply(as.numeric(as.character(Catch)), 
                              as.character(mySurveyID), sum, na.rm=T))
 # head(tmp)
@@ -501,7 +520,7 @@ nSurveys <- sites$nSurveys
 # First remove extraneous objects:
 rm(streams, stream_pts)
 
-save.image("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/2_OrganizeNewData/ArkData.Rdata")
+save.image("Output_Files/2_OrganizeNewData/ArkData.Rdata")
 #
 
 
@@ -518,8 +537,8 @@ save.image("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/2_
 
 
 ### ---------------------------------------------------------------
-### Exploritory Data Analysis (EDA) tables and figures of site and survey info ----------------
-setwd("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/2_OrganizeNewData/EDA")
+### Exploratory Data Analysis (EDA) tables and figures of site and survey info ----------------
+setwd("Output_Files/2_OrganizeNewData/EDA")
 
 # nrow(surveys)  # 412
 # nrow(sites)  # 143
@@ -652,7 +671,7 @@ sink()
 
 
 ### MAPS ---------------------------------------------
-setwd("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/ArcGIS_files/AsShapefiles/")
+setwd("~/CPWOptimalSampling/ArcGIS_files/AsShapefiles")
 
 ## Read in the shapefiles:
 # CO.rg <- readOGR(".", "Colorado_Boundary")
@@ -710,7 +729,8 @@ proj4string(sites.sp) <- CRS("+proj=utm +zone=13 +datum=NAD83 +units=m +no_defs 
 # summary(sites.sp)
 
 #plot(streams.rg, col="blue", lwd=2.0)
-png("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/2_OrganizeNewData/EDA/Sites.png", 
+#SG: had slighty change path
+png("~/CPWOptimalSampling/Output_Files/2_OrganizeNewData/EDA/Sites.png", 
     width=1024, height=768)
 par(mar=c(0.01, 0.01, 0.01, 0.01))
 # plot(HUC.rg, col=gray(0.9), border=gray(0.9), mar=c(0.1, 0.1, 0.1, 0.1))
@@ -735,6 +755,7 @@ plot(st_geometry(streams.rg), add=T, col="dodgerblue3", lwd=2.0)
 points(subset(sites.sp, nSurveys = 1), col="black", pch=17, cex=1)
 points(subset(sites.sp, nSurveys > 1), col="black", pch=8, cex=1.2)
 # Add scale bar
+#SG: this comes from sdmTools archived package
 Scalebar(646000, 4105000, 100000, unit = "km", 
          scale = 0.01, t.cex = 1.5)
 # Add title
@@ -773,7 +794,7 @@ l4b = list("sp.text", c(696000, 4116000), "500", cex=0.8)
 # 1000 km of distance bar
 l5 = list("sp.text", c(746000, 4116000), "1000 km", cex=0.8)
 
-png("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/2_OrganizeNewData/EDA/elevations.png", 
+png("~/CPWOptimalSampling/Output_Files/2_OrganizeNewData/EDA/elevations.png", 
     width=1024, height=768)
 
 # pts.1 <- list(l3, l4, l4b, l5,elev)
@@ -840,7 +861,7 @@ coordinates(all_sites.sp) <- c("UTMX", "UTMY")
 proj4string(all_sites.sp) <- CRS("+proj=utm +zone=13 +datum=NAD83 +units=m +no_defs +ellps=GRS80 +towgs84=0,0,0")
 all_sites.sp$streamF <- as.factor(all_sites.sp$StreamSize)
 
-png("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/2_OrganizeNewData/EDA/streamsize.png",
+png("~/CPWOptimalSampling/Output_Files/2_OrganizeNewData/EDA/streamsize.png",
     width=1024, height=768)
 spplot(all_sites.sp["streamF"],
        # sp.layout=list(l3, l4, l4b, l5, elev),
@@ -853,21 +874,21 @@ dev.off()
 
 
 ## Maps of land cover covariates:
-png("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/2_OrganizeNewData/EDA/crops.png",
+png("~/CPWOptimalSampling/Output_Files/2_OrganizeNewData/EDA/crops.png",
     width=1024, height=768)
 spplot(all_sites.sp["CROPS"],
        # sp.layout=list(l3, l4, l4b, l5, elev),
        main=list(label="Proportion cropland", cex=1),
        colorkey=T, cex=1, par.settings=list(fontsize=list(text=36)))
 dev.off()
-png("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/2_OrganizeNewData/EDA/wetlands.png",
+png("~/CPWOptimalSampling/Output_Files/2_OrganizeNewData/EDA/wetlands.png",
     width=1024, height=768)
 spplot(all_sites.sp["WTLNDS"],
        sp.layout=list(l3, l4, l4b, l5, elev),
        main=list(label="Proportion wetlands", cex=1),
        colorkey=T, cex=1, par.settings=list(fontsize=list(text=36)))
 dev.off()
-png("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/2_OrganizeNewData/EDA/dvlpd.png",
+png("~/CPWOptimalSampling/Output_Files/2_OrganizeNewData/EDA/dvlpd.png",
     width=1024, height=768)
 spplot(all_sites.sp["DVLPD"],
        sp.layout=list(l3, l4, l4b, l5, elev),
@@ -876,7 +897,7 @@ spplot(all_sites.sp["DVLPD"],
 dev.off()
 
 ## Map of reservoir locations
-png("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/2_OrganizeNewData/EDA/reservoirs.png",
+png("~/CPWOptimalSampling/Output_Files/2_OrganizeNewData/EDA/reservoirs.png",
     width=1024, height=768)
 spplot(all_sites.sp["RESERVOIR"],
        sp.layout=list(l3, l4, l4b, l5, elev),
@@ -886,7 +907,7 @@ spplot(all_sites.sp["RESERVOIR"],
        par.settings=list(fontsize=list(text=36)))
 dev.off()
 ## Map of Fountain Creek
-png("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/2_OrganizeNewData/EDA/fountain.png",
+png("~/CPWOptimalSampling/Output_Files/2_OrganizeNewData/EDA/fountain.png",
     width=1024, height=768)
 spplot(all_sites.sp["FTN"],
        sp.layout=list(l3, l4, l4b, l5, elev),
@@ -896,7 +917,7 @@ spplot(all_sites.sp["FTN"],
        par.settings=list(fontsize=list(text=36)))
 dev.off()
 ## Map of Purgatoire R
-png("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/2_OrganizeNewData/EDA/purgatoire.png",
+png("~/CPWOptimalSampling/Output_Files/2_OrganizeNewData/EDA/purgatoire.png",
     width=1024, height=768)
 spplot(all_sites.sp["PURG"],
        sp.layout=list(l3, l4, l4b, l5, elev),
@@ -906,7 +927,7 @@ spplot(all_sites.sp["PURG"],
        par.settings=list(fontsize=list(text=36)))
 dev.off()
 ## Map of Main Stem
-png("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/2_OrganizeNewData/EDA/mainstem.png",
+png("~/CPWOptimalSampling/Output_Files/2_OrganizeNewData/EDA/mainstem.png",
     width=1024, height=768)
 spplot(all_sites.sp["MAIN"],
        sp.layout=list(l3, l4, l4b, l5, elev),
@@ -916,7 +937,7 @@ spplot(all_sites.sp["MAIN"],
        par.settings=list(fontsize=list(text=36)))
 dev.off()
 ## Map of CONNECT vs UNCONNECT streams
-png("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/2_OrganizeNewData/EDA/CONNECT.png",
+png("~/CPWOptimalSampling/Output_Files/2_OrganizeNewData/EDA/CONNECT.png",
     width=1024, height=768)
 spplot(all_sites.sp["UNCONNECT"], bty="n",
        sp.layout=list(l3, l4, l4b, l5, elev),
@@ -930,7 +951,7 @@ rm(all_sites.sp)
 
 
 ### FIGURES ----------------------------------------------
-setwd("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/2_OrganizeNewData/")
+setwd("~/CPWOptimalSampling/Output_Files/2_OrganizeNewData/")
 
 # Histogram of day-of-year when sampling took place:
 hist(SampOccasions$yday, xlab="Day-of-year") #  xaxt="n", 
@@ -996,11 +1017,12 @@ SampOccasions_wNSPP <- unique( merge(SampOccasions, nspp.table) )
 # nrow=201.  good.  matches SampOccasions
 png("EDA/NSPPhist.png", width=1024, height=768)
 par(mar=c(6, 7, 4, 4))
-hist(SampOccasions_wNSPP$NSPP, xlab="", xaxt="n", las=1, breaks=16,
-     main="Number of species detected per sampling occasion", ylab="",
-     cex.lab=3, cex.main=3, cex.axis=3, col="gray")
-axis(1, at=seq(0, 15, by=5), cex.axis=3, line=0)
-mtext("No. of sampling occasions", 2, line=4.5, cex=3)
+##SG: this column NSPP doesn't exist, we don't know why
+# hist(SampOccasions_wNSPP$NSPP, xlab="", xaxt="n", las=1, breaks=16,
+#      main="Number of species detected per sampling occasion", ylab="",
+#      cex.lab=3, cex.main=3, cex.axis=3, col="gray")
+# axis(1, at=seq(0, 15, by=5), cex.axis=3, line=0)
+# mtext("No. of sampling occasions", 2, line=4.5, cex=3)
 #mtext("No. of fish detected", 1, line=4, cex=3)
 dev.off()
 #
@@ -1057,10 +1079,11 @@ nDetects <- unique(subset(samp_dat,
 # dim(unique(cbind(nDetects$UTMX, nDetects$UTMY)))  #  141
 #
 # And look at nDetects per *site*
+#SG: columns watername and WaterNameDateX Not found
 nDetects <- unique(subset(samp_dat, 
                           select=-c(METHOD, PASSNO, sameStatus, Catch,
                                     mySurveyID, SampleDate, year, YEAR,
-                                    month, yday, YDAY, YDAY2, WaterName, WaterNameDateX)))
+                                    month, yday, YDAY, YDAY2))) #, WaterName, WaterNameDateX
 # table(nDetects$SpeciesCode)
 # dim(unique(cbind(nDetects$UTMX, nDetects$UTMY)))  #  143
 #
@@ -1111,7 +1134,7 @@ nPasses.out <- data.frame(WaterName, Date, UTMX, nPasses.df)
 
 # getwd()
 # setwd("/Volumes/CPW_Work/Optimum Sampling/Ark_Sampling_bwa_test/EDA")
-write.csv(nPasses.out, "/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/2_OrganizeNewData/EDA/nPassesPerSampOcc.csv", row.names = F)
+write.csv(nPasses.out, "~/CPWOptimalSampling/Output_Files/2_OrganizeNewData/EDA/nPassesPerSampOcc.csv", row.names = F)
 #
 
 # end of file. -----------------------------

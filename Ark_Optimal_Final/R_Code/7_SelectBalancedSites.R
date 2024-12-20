@@ -11,15 +11,16 @@
 ##ArkBalanceSites.RData
 
 ## Set directory:
-setwd("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/7_SelectBalancedSites")  # Fill in as appropriate
+setwd("~/CPWOptimalSampling/Output_Files/7_SelectBalancedSites")  # Fill in as appropriate
 # setwd("~/ArkModels")  # for server
 
 
-# remotes::install_version("spsurvey", version = "3.3", repos = "http://cran.us.r-project.org")
+#remotes::install_version("spsurvey", version = "3.3", repos = "http://cran.us.r-project.org")
+#SG: this is just bc i downloaded the package locally
+#still need dependencies below though
+install.packages("C:/Users/graffs.NATURENET.001/Downloads/spsurvey_3.3.tar.gz", repos = NULL, type = "source")
 
-
-
-
+detach("package:foreign", unload=TRUE)
 
 ## LIBRARIES:
 # library(fields)  # for cover.designs() function
@@ -32,26 +33,30 @@ setwd("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/7_Selec
 
 # install old version of spsurvey
 # old dependencies for spsurvey
-# install.packages("Hmisc")
+#install.packages("Hmisc")
+"https://cran.r-project.org/src/contrib/Archive/Hmisc/Hmisc_3.17-4.tar.gz"
 # geos_loc <- "/Volumes/CPW_Work/Old_R_packages/rgeos_0.6-4.tar.gz"
 # install.packages("/Volumes/CPW_Work/Old_R_packages/rgeos_0.6-4.tar.gz", repos=NULL, type="source")
-# # 
-
+# # SG spot: 
+#install.packages("C:/Users/graffs.NATURENET.001/Downloads/rgeos_0.6-4.tar.gz", repos = NULL, type = "source")
+#on R version 3.5, might need older version of rtools as well in order to compile packages
+#https://cran.r-project.org/bin/windows/Rtools/history.html
 
 # spsurvey_loc <- "https://cran.r-project.org/src/contrib/Archive/spsurvey/spsurvey_4.1.2.tar.gz"
 # install.packages(spsurvey_loc, repos=NULL, type="source")
-
+#SG: for Sp dependency:
+# install.packages("C:/Users/graffs.NATURENET.001/Downloads/sp_1.2-3.tar.gz", repos = NULL, type = "source")
 
 library(spsurvey)
-# library(foreign) # read .dbf files
+library(foreign) # read .dbf files
 library(sp)
 library(sf)
 
 
 
 ### Import the data and source functions -----------------------
-load("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Output_Files/2_OrganizeNewData/ArkData.Rdata")
-source("/Volumes/CPW_Work/Optimum Sampling/Ark_Optimal_Final/Source_Files/ArkFunctions.R")
+load("~/CPWOptimalSampling/Output_Files/2_OrganizeNewData/ArkData.Rdata")
+source("~/CPWOptimalSampling/Source_Files/ArkFunctions.R")
 
 
 ## Use GRTS because of Basin characterics ------------

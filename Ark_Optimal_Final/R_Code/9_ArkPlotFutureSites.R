@@ -1,6 +1,7 @@
 
 # plot sites selected as best.
 library(maptools) # for readShapePoints() and to write a kml file
+#install.packages("C:/Users/graffs.NATURENET.001/Downloads/maptools_0.8-40.tar.gz", repos = NULL, type = "source")
 # library(rgdal) # for readOGR function; no longer available 2024
 library(sf) # use instead of rgdal
 library(sp)
